@@ -2,7 +2,7 @@ class Animal {
     constructor(especie, tamanho, biomas) {
         this.especie = especie;
         this.tamanho = tamanho;
-        this.biomas = biomas;  // Mudança para representar vários biomas
+        this.biomas = biomas;  
     }
 }
 
@@ -40,18 +40,20 @@ class RecintosZoo {
             return { erro: "Quantidade inválida" };
         }
 
-        const espacoNecessario = selecionarAnimal.tamanho * quantidade;
+        let espacoNecessario = selecionarAnimal.tamanho * quantidade;
 
+    
         let recintosFiltrados = this.recintos.filter(recinto => {
-            let espacoExtra = (recinto.animais.length > 0 && !recinto.animais.includes(selecionarAnimal.especie)) ? 1 : 0;
-            let espacoDisponivel = recinto.espacoLivre - espacoExtra;
+            //let espacoExtra = (recinto.animais.length > 0 && recinto.animais.every(animal => animal === selecionarAnimal.especie)) ? 1 : 0;
+            let espacoDisponivel = recinto.espacoLivre;
 
             if (espacoDisponivel < espacoNecessario) return false;
             if (!selecionarAnimal.biomas.some(bioma => recinto.bioma.includes(bioma))) return false;
             
             if (selecionarAnimal.especie === 'HIPOPOTAMO' && recinto.bioma.length < 2) return false;
-            if (selecionarAnimal.especie === 'MACACO' && recinto.animais.length === 0) return false;
-
+            if (selecionarAnimal.especie === 'MACACO' && recinto.animais.length === 0) {
+                return true; 
+            }
             if (['LEAO', 'LEOPARDO', 'CROCODILO'].includes(selecionarAnimal.especie) && recinto.animais.length > 0) {
                 return recinto.animais.every(animal => animal === selecionarAnimal.especie);
             }
@@ -62,13 +64,25 @@ class RecintosZoo {
         if (recintosFiltrados.length === 0) {
             resultado.erro = "Não há recinto viável";
             resultado.recintosViaveis = null;
-        } else {
+        }else {
             resultado.recintosViaveis = recintosFiltrados.map(recinto => {
                 let espacoLivreAposAdicionar = recinto.espacoLivre - espacoNecessario;
+            
+                // Verifica se já há outras espécies no recinto
+                const especiesDiferentes = new Set(recinto.animais);
+                especiesDiferentes.add(selecionarAnimal.especie); // Adiciona a espécie do novo animal
+
+                // Se houver mais de uma espécie no recinto, adiciona 1 ao espaço necessário
+                if (especiesDiferentes.size > 1) {
+                    espacoLivreAposAdicionar -= 1;
+                }
+                    //if (recinto.animais.length > 0 && recinto.animais.some(animal => animal.especie === selecionarAnimal.especie)) {
+                    //    espacoLivreAposAdicionar -= espacoNecessario; // Ajusta o espaço extra caso seja necessário
+                    //}    
+                
                 return `${recinto.nome} (espaço livre: ${espacoLivreAposAdicionar} total: ${recinto.capacidadeTotal})`;
             });
         }
-
         return resultado;
     }
 }
